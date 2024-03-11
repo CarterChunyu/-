@@ -1,0 +1,85 @@
+﻿<div>
+    <div class="form-group">
+        <label>檔案名稱</label>
+        <input class="form-control" id="filename" value="施工架結構計算書">
+        <small id="filename" class="form-text text-muted">下載檔案名稱,不需要加上副檔名</small>
+        <label>標題一</label>
+        <input class="form-control" id="title1" placeholder="臺銀彰化日式宿舍">
+        <small id="title1" class="form-text text-muted">第一行標題</small>
+        <label>標題二</label>
+        <input class="form-control" id="title2" placeholder="修復及再利用工程">
+        <small id="title2" class="form-text text-muted">第二行標題</small>
+        <label>標題三</label>
+        <input class="form-control" id="title3" placeholder="頭取宿舍-33號">
+        <small id="title3" class="form-text text-muted">第三行標題</small>
+        <label>施工單位</label>
+        <input class="form-control" id="constructionunit" placeholder="永如營造股份有限公司">
+        <small id="constructionunit" class="form-text text-muted">施工單位名稱</small>
+        <label>設計單位</label>
+        <input class="form-control" id="designunit" placeholder="雇捷工程顧問有限公司">
+        <small id="designunit" class="form-text text-muted">設計單位名稱</small>
+    </div>
+    <button id="submit" class="btn btn-primary">Submit</button>
+</div>
+
+
+
+
+@section Scripts{
+    <script>
+        let filename = '';
+        let status ;
+        let btn1 = document.getElementById('submit');
+        btn1.addEventListener('click', function(){
+
+            let info = {
+                Filename: document.getElementById('filename').value,
+                Title1: document.getElementById('title1').value,
+                Title2: document.getElementById('title2').value,
+                Title3: document.getElementById('title3').value,
+                ConstructionUnit: document.getElementById('constructionunit').value,
+                DesignUnit: document.getElementById('designunit').value,
+
+            };
+
+            let uri = '/api/DocumentApi/SaveFile';
+            fetch(uri,{
+                method:'post',
+                headers:{
+                  'Content-Type' : 'application/json'
+                },
+                body:JSON.stringify(info)
+            })
+            .then(response =>{
+                console.log(response);
+                console.log(response.status == 500)
+                status = response.status;
+                if(response.status == 200)
+                {
+                    let header = response.headers.get('Content-Disposition');
+                    let parts = header.split(';');
+                    filename = parts[1].split('=')[1];
+                    return response.blob();
+                }
+                else
+                {
+                    return response.json();
+                }
+            })
+            .then(result=>{
+                if(status == 200){
+                    let url = window.URL.createObjectURL(result);
+                    let filelink = document.createElement('a');
+                    filelink.href = url;
+                    filelink.download = filename;
+                    document.body.appendChild(filelink);
+                    filelink.click();
+                    filelink.remove();
+                }
+                else{
+                    window.alert(result.Detail);
+                }
+            })
+        })
+    </script>
+}
